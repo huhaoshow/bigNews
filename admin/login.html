@@ -38,6 +38,25 @@
     </div>
   </div>
 
+  <script>
+    // 先写入口函数,防止浏览器实行异步的时候造成错误
+    $(function () {
+      // 查找元素
+      $('.input_sub').on('click', function (e) {
+        e.preventDefault();
+        let userName = $('.input_txt').val().trim();
+        let userPwd = $('.input_pass').val().trim();
+        if (userName === '' || userPwd === '') {
+
+        }
+      })
+
+
+
+    })
+
+
+  </script>
 </body>
 
 </html>
