@@ -60,6 +60,8 @@
         // 添加入口函数
         $(function () {
             // 登入完成后,发ajax请求获取用户数据
+            // 为了防止未登录的用户进入到内部页面,在发送请求的时候,需要对其进行验证,所以发ajax请求的时候要加请求头,请求头中使用Authorization字段提供token令牌,如:
+            // xhr.setRequestHeader('Authorization','token令牌');
 
             // 原生方式请求
             // const xhr = new XMLHttpRequest();
@@ -74,11 +76,12 @@
             // })
 
             // jQuery的方式请求
+            // 由于jQuery的get请求方式中默认没有设置请求头,所以需要额外添加,因为之后的所有的请求都需要验证token,所以可以对jQuery中的ajax添加默认行为;
             $.ajax({
                 type: 'get',
                 url: BigNews.user_info,
                 success: function (backData) {
-                    console.log(backData);
+                    // 获取个人信息并渲染到页面上
                     $('.user_info img').attr('src', backData.data.userPic);
                     $('.user_info span').html('欢迎&nbsp;&nbsp;' + backData.data.nickname);
                     $('.user_center_link img').attr('src', backData.data.userPic);

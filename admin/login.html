@@ -60,17 +60,26 @@
   </div>
   <script>
     // 先写入口函数,防止浏览器实行异步的时候造成错误
+    // 在原生中入口函数的写法,load事件类型是当页面加载完成后执行的事件
+    // window.addEventListener('load',function(){
+
+    // });
     $(function () {
+      // 点击登录按钮,触发验证账号密码
       $('.input_sub').on('click', function (e) {
+        // 移除submit的默认提交事件,避免输入非法账号也进行提交验证
         e.preventDefault();
+        // 获取用户输入的用户名和密码
         let userName = $('.input_txt').val().trim();
         let userPwd = $('.input_pass').val().trim();
         // 发请求前判断用户名和密码是否为空
         if (userName === '' || userPwd === '') {
+          // 如果为空就给用户弹出模态框提示输入用户名和密码,并终止事件;
           $('.modal-body').text('傻逼,你的用户名呢！');
           $('#myModal').modal();
           return;
         }
+        // 发送ajax请求,请求服务器判断用户名和密码是否正确
         $.ajax({
           type: 'post',
           url: BigNews.user_login,
@@ -79,8 +88,10 @@
             password: userPwd
           },
           success: function (backData) {
+            // 如果请求返回的数据完成后,弹出模态框提示用户当前状态
             $('.modal-body').text(backData.msg);
             $('#myModal').modal();
+            // 如果密码正确,将返回的数据中的token存到本地存储中,方便进入其他页面,设置token的目的是,防止未通过登录的用户用其他方式进入到首页等内部页面,在每次发ajax请求前都要对token进行核查,否则报错'Forbidden'并返回到登录页面;
             if (backData.code === 200) {
               localStorage.setItem('token', backData.token);
               $('#myModal').on('hidden.bs.modal', function (e) {
