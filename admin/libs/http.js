@@ -4,7 +4,7 @@
 ; (function (w) {
     // 将baseURL定义成变量,方便之后更改基地址
     let baseURL = 'http://localhost:8080/api/v1';
-    const BigNew = {
+    const BigNews = {
         baseURL: baseURL,                                       //基地址
         user_login: baseURL + '/admin/user/login',              //用户登录
         user_info: baseURL + '/admin/user/info',                //获取用户信息
@@ -30,5 +30,5 @@
         comment_delete: baseURL + '/admin/comment/delete'       //删除评论
     }
     // 暴露接口
-    w.BigNew = BigNew;
+    w.BigNews = BigNews;
 })(window)
