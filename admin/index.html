@@ -13,6 +13,8 @@
     <script src="./libs/jquery-1.12.4.min.js"></script>
     <!-- 导入bootstrap的js文件 -->
     <script src="./libs/bootstrap/js/bootstrap.min.js"></script>
+    <!-- 引入接口路径js文件 -->
+    <script src="./libs/http.js"></script>
 </head>
 
 <body>
@@ -20,7 +22,7 @@
         <a href="#" class="logo"><img src="images/logo02.png" alt="logo"></a>
         <div class="user_info">
             <img src="images/2.jpg" alt="person">
-            <span>欢迎&nbsp;&nbsp;李思思</span>
+            <span>欢迎&nbsp;&nbsp;</span>
             <b>管理员</b>
         </div>
         <!-- 左侧导航栏 -->
@@ -54,6 +56,58 @@
 
         </div>
     </div>
+    <script>
+        // 添加入口函数
+        $(function () {
+            // 登入完成后,发ajax请求获取用户数据
+
+            // 原生方式请求
+            // const xhr = new XMLHttpRequest();
+            // xhr.open('get', BigNews.user_info);
+            // xhr.setRequestHeader('Authorization', localStorage.getItem('token'));
+            // xhr.send(null);
+            // xhr.addEventListener('readystatechange', function () {
+            //     if (xhr.status === 200 && xhr.readyState === 4) {
+            //         let res = JSON.parse(xhr.responseText);
+            //         console.log(res);
+            //     }
+            // })
+
+            // jQuery的方式请求
+            $.ajax({
+                type: 'get',
+                url: BigNews.user_info,
+                success: function (backData) {
+                    console.log(backData);
+                    $('.user_info img').attr('src', backData.data.userPic);
+                    $('.user_info span').html('欢迎&nbsp;&nbsp;' + backData.data.nickname);
+                    $('.user_center_link img').attr('src', backData.data.userPic);
+
+                }
+            })
+            // 点击退出,退到登录页面,并且清空登录令牌
+            $('.user_center_link .logout').on('click', function () {
+                window.location.href = './login.html';
+                localStorage.removeItem('token');
+            })
+
+
+
+
+
+
+
+
+
+
+
+
+        })
+
+
+
+
+    </script>
 </body>
 
 </html>

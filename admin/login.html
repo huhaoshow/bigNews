@@ -79,7 +79,6 @@
             password: userPwd
           },
           success: function (backData) {
-            console.log(backData);
             $('.modal-body').text(backData.msg);
             $('#myModal').modal();
             if (backData.code === 200) {
