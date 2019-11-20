@@ -56,8 +56,7 @@
         </div>
         <!-- 右侧主体内容 -->
         <div class="main" id="main_body">
-            <iframe src="./article_category.html" frameborder="0" name="main_frame"
-                style="width:100%;height:100%"></iframe>
+            <iframe src="./main_count.html" frameborder="0" name="main_frame" style="width:100%;height:100%"></iframe>
         </div>
     </div>
     <script>
@@ -103,7 +102,6 @@
                 if ($(this).index() == 1) {
                     $('ul.level02').toggle();
                     $('ul.level02 li:eq(0)>a')[0].click();
-                    console.log($(this).find('b'));
                     $(this).find('b')[0].classList.toggle('rotate0');
                 }
             })

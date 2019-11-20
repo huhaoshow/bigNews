@@ -22,7 +22,7 @@
             <td>{{$value.slug}}</td>
             <td class="text-center">
                 <a href="javascript:void(0)" data-id = '{{$value.id}}' data-toggle="modal" data-target="#myModal" class=" btn btn-info btn-xs">编辑</a>
-                <a href="javascript:void(0)" data-id = '{{$value.id}}' class="btn btn-danger btn-xs">删除</a>
+                <a href="javascript:void(0)" data-id = '{{$value.id}}' class="btn btn-danger btn-xs btn-delete">删除</a>
             </td>
         </tr>
 
@@ -63,12 +63,14 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                            aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"
+                            id='close'>&times;</span></button>
                     <h4 class="modal-title" id="exampleModalLabel">新增类别</h4>
                 </div>
                 <div class="modal-body">
                     <form>
+                        <!-- 隐藏域 -->
+                        <input type="hidden" id="categoryId">
                         <div class="form-group">
                             <label for="recipient-name" class="control-label">名称</label>
                             <input type="text" class="form-control" id="recipient-name">
@@ -80,8 +82,8 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-warning" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary">确认</button>
+                    <button type="button" class="btn btn-warning" data-dismiss="modal" id='cancel'>取消</button>
+                    <button type="button" class="btn btn-primary" id="btn-confirm">确认</button>
                 </div>
             </div>
         </div>
@@ -91,26 +93,121 @@
     <script>
         // 入口函数
         $(function () {
-            // 发请求获取数据并渲染
-            $.get({
-                url: BigNews.category_list,
-                success: function (backData) {
-                    if (backData.code === 200) {
-                        let htmlStr = template('list', backData);
-                        $('table tbody').html(htmlStr);
+            // 发请求获取数据并渲染,并抽离函数
+            const getData = function () {
+                $.get({
+                    url: BigNews.category_list,
+                    success: function (backData) {
+                        if (backData.code === 200) {
+                            let htmlStr = template('list', backData);
+                            $('table tbody').html(htmlStr);
+                        }
                     }
-                }
-            })
+                })
+            }
+            getData();
             // 给取消按钮注册事件
-            $('.modal-footer .btn-warning').on('click', function () {
+            $('#cancel').on('click', function () {
                 $('.modal-body form')[0].reset();
             })
-            // 点击某个元素时触发模态框
+            // 当触发模态框的时候判断触发该事件的触发器,从而触发模态框的是新增还是编辑
             $('#myModal').on('show.bs.modal', function (e) {
-                if (e.relatedTarget ===)
+                // 首先用新增触发来判断,因为编辑是后添加的元素,在页面中无法直接找到
+                if (e.relatedTarget === $('#xinzengfenlei')[0]) {
+                    // 是新增触发的模态框
+                    $('#exampleModalLabel').text('添加新类别');
+                    $('#btn-confirm').text('添加').addClass('btn-info').removeClass('btn-primary').removeClass('btn-success');
+                    // 点击新增分类后重置表单内容
+                    $('.modal-body form')[0].reset();
+
+                } else {
+                    // 否则就是编辑触发的模态框
+                    $('#exampleModalLabel').text('编辑文章分类');
+                    $('#btn-confirm').text('完成').addClass('btn-success').removeClass('btn-primary').removeClass('btn-info');
+                    // 点击编辑事件后将该条内容进行渲染
+                    const editId = $(e.relatedTarget).attr('data-id');
+                    $.get({
+                        url: BigNews.category_search,
+                        data: {
+                            id: editId
+                        },
+                        success: function (backData) {
+                            if (backData.code === 200) {
+                                $('#recipient-name').val(backData.data[0].name);
+                                $('#message-text').val(backData.data[0].slug);
+                                $('#categoryId').val(backData.data[0].id);
+                            }
+                        }
+                    })
+                }
             })
 
+            // 给添加/完成按钮注册事件
+            $('#btn-confirm').on('click', function () {
+                if ($(this).hasClass('btn-success')) {
+                    // 点击的是完成
+                    let name = $('#recipient-name').val();
+                    let slug = $('#message-text').val();
+                    let categoryId = $('#categoryId').val();
+                    $.post({
+                        url: BigNews.category_edit,
+                        data: {
+                            name: name,
+                            slug: slug,
+                            id: categoryId
+                        },
+                        success: function (backData) {
+                            if (backData.code === 200) {
+                                // 伪刷新页面并关闭模态框
+                                // $('#myModal').modal('hide');
+                                $('#close')[0].click();
+                                getData();
+                            } else if (backData.code === 400) {
+                                alert(backData.msg);
+                            }
+                        }
+                    })
+                } else {
+                    // 点击的是添加
+                    let name = $('#recipient-name').val();
+                    let slug = $('#message-text').val();
+                    // 发ajax请求
+                    $.post({
+                        url: BigNews.category_add,
+                        data: {
+                            name: name,
+                            slug: slug
+                        },
+                        success: function (backData) {
+                            if (backData.code === 201) {
+                                // 伪刷新页面并关闭模态框
+                                // $('#myModal').modal('hide');
+                                $('#close')[0].click();
+                                getData();
+                            }
+                        }
+                    })
+                }
+            })
 
+            // 给删除按钮注册点击事件
+            $('tbody').on('click', '.btn-delete', function () {
+                deleteId = $(this).attr('data-id');
+                let bl = confirm('你确定要删除这个类吗？');
+                if (bl) {
+                    $.post({
+                        url: BigNews.category_delete,
+                        data: {
+                            id: deleteId
+                        },
+                        success: function (backData) {
+                            if (backData.code === 204) {
+                                getData();
+                            }
+                        }
+                    })
+                }
+            })
 
 
 
@@ -119,5 +216,12 @@
 
         })
     </script>
+    <!-- 11.21 总结 -->
+    <!-- 对于处理同一个模态框,但点击不同的按钮却显示不同的状态-->
+    <!-- 可以通过用data属性来控制模态框的启动,同时绑定show.bs.modal类型事件,该事件是触发模态框时执行的事件,并且使用relatedTarget的事件属性来确定点击触发模态框的元素,通过判断e.relatedTarget是否和想要点击的元素相同,从而达到不同点击按钮的事件执行  -->
+    <!-- 对于点击同一个按钮却拥有不同的效果的解决方案-->
+    <!-- 判断两种执行效果的不同,找到区别的方法,从而判断该执行哪个效果,例如,点击编辑/新增按钮时候,点击的是同一个按钮,但却要执行不同的效果,可以对点击时候的元素进行判断,判断该元素内是否存在某个类名,从而达到效果  -->
+    <!-- 隐藏域 -->
+    <!-- 用于存放一些id,方便查找,通过js把id赋值给隐藏域的value值内,需要的时候将其调出,例如,编辑的时候点击完成,请求数据需要发送编辑内容的id值,但无法获取到点击的是哪个按钮,于是可以在点击编辑按钮触发模态框的时候将id值存放在隐藏域中的value值中,点击时将value取出即可 -->
 
 </html>
