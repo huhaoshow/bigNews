@@ -14,6 +14,20 @@
     <script src="./libs/bootstrap/js/bootstrap.min.js"></script>
     <!-- 引入模板引擎js文件 -->
     <script src="./libs/template-web.js"></script>
+    <!-- 引入模板 -->
+    <script type="text/html" id="list">
+        {{each data}}
+        <tr>
+            <td>{{$value.name}}</td>
+            <td>{{$value.slug}}</td>
+            <td class="text-center">
+                <a href="javascript:void(0)" data-id = '{{$value.id}}' data-toggle="modal" data-target="#myModal" class=" btn btn-info btn-xs">编辑</a>
+                <a href="javascript:void(0)" data-id = '{{$value.id}}' class="btn btn-danger btn-xs">删除</a>
+            </td>
+        </tr>
+
+        {{/each}}
+    </script>
 </head>
 
 <body>
@@ -31,14 +45,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>奇趣事</td>
-                        <td>funny</td>
-                        <td class="text-center">
-                            <a href="javascript:void(0)" data-toggle="modal" class=" btn btn-info btn-xs">编辑</a>
-                            <a href="javascript:void(0)" class="btn btn-danger btn-xs">删除</a>
-                        </td>
-                    </tr>
+
                 </tbody>
                 <tfoot>
                     <tr>
@@ -51,5 +58,66 @@
             </table>
         </div>
     </div>
+    <!-- 引入bootstrap的模态框 -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="exampleModalLabel">新增类别</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="recipient-name" class="control-label">名称</label>
+                            <input type="text" class="form-control" id="recipient-name">
+                        </div>
+                        <div class="form-group">
+                            <label for="message-text" class="control-label">Slug</label>
+                            <textarea class="form-control" id="message-text"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary">确认</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 引入接口路径js文件 -->
+    <script src="./libs/http.js"></script>
+    <script>
+        // 入口函数
+        $(function () {
+            // 发请求获取数据并渲染
+            $.get({
+                url: BigNews.category_list,
+                success: function (backData) {
+                    if (backData.code === 200) {
+                        let htmlStr = template('list', backData);
+                        $('table tbody').html(htmlStr);
+                    }
+                }
+            })
+            // 给取消按钮注册事件
+            $('.modal-footer .btn-warning').on('click', function () {
+                $('.modal-body form')[0].reset();
+            })
+            // 点击某个元素时触发模态框
+            $('#myModal').on('show.bs.modal', function (e) {
+                if (e.relatedTarget ===)
+            })
+
+
+
+
+
+
+
+
+        })
+    </script>
 
 </html>
