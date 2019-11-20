@@ -44,7 +44,7 @@
                     <label for="inputPassword3" class="col-sm-2 control-label">用户图标：</label>
                     <div class="col-sm-10">
                         <img src="images/2.jpg" alt="" class="user_pic">
-                        <input style="display: block" name="userPic" type="file" id="exampleInputFile">
+                        <input style="display: none" name="userPic" type="file" id="exampleInputFile">
                         <!-- 给label标签的for属性赋值,值是input标签的id,那这样的话点击label就相当于点击了input -->
                         <br>
                         <label for="exampleInputFile">
@@ -68,26 +68,69 @@
             </form>
         </div>
     </div>
-    引入接口路径
+    <!-- 引入接口路径 -->
     <script src="./libs/http.js"></script>
     <script>
-        // 向服务器请求获取用户数据并渲染
-        $.get({
-            url: BigNews.user_detail,
-            success: function (backData) {
-                if (backData.code === 200) {
-                    // $('input.username').val(backData.data.username);
-                    // $('input.nickname').val(backData.data.nickname);
-                    // $('input.email').val(backData.data.email);
-                    // $('input.password').val(backData.data.password);
-                    // $('.user_pic').attr('src', backData.data.userPic);
-                    // 简化
-                    $(backData.data).each(function (index) {
-                        console.log($(this));
-                        $('input.' + this).val(this);
-                    })
+        $(function () {
+            // 向服务器请求获取用户数据并渲染
+            $.get({
+                url: BigNews.user_detail,
+                success: function (backData) {
+                    if (backData.code === 200) {
+                        // $('input.username').val(backData.data.username);
+                        // $('input.nickname').val(backData.data.nickname);
+                        // $('input.email').val(backData.data.email);
+                        // $('input.password').val(backData.data.password);
+                        // $('.user_pic').attr('src', backData.data.userPic);
+                        // 简化
+                        for (let key in backData.data) {
+                            $('input.' + key).val(backData.data[key]);
+                        }
+                        $('img.user_pic').attr('src', backData.data.userPic);
+                    }
                 }
-            }
+            })
+
+            // 对用户信息进行修改
+            // 上传文件时,在页面上预览图片
+            $('#exampleInputFile').on('change', function () {
+                // this指向的是绑定该事件的元素,而不是$('#exampleInputFile');
+                // URL.createObjectURL(需要转换的文件信息),该方法可以将文件信息转换成url的格式;
+                let imgUrl = URL.createObjectURL(this.files[0]);
+                $('img.user_pic').attr('src', imgUrl);
+            })
+            // label标签的关联性:给label标签的for属性赋值,值是input标签的id,那这样的话点击label就相当于点击了input
+            // 点击修改时,将修改内容提交到服务器并伪刷新一次页面
+            $('button.btn-edit').on('click', function (e) {
+                e.preventDefault();
+                // 用FormData获取表单元素的所有内容仅适用于原生对象
+                let userData = new FormData($('#form')[0]);
+                $.post({
+                    url: BigNews.user_edit,
+                    data: userData,
+                    // 不需要发送请求头和数据类型
+                    contentType: false,
+                    processData: false,
+                    success: function (backData) {
+                        if (backData.code === 200) {
+                            // 发ajax请求更新页面数据
+                            $.get({
+                                url: BigNews.user_info,
+                                success: function (backData) {
+                                    // 更新父页面的信息
+                                    // parent.window.location.reload();
+                                    parent.$('.user_info>img').attr('src', backData.data.userPic);
+                                    parent.$('.user_info>span').html('欢迎&nbsp;&nbsp;' + backData.data.nickname);
+                                    parent.$('.user_center_link>img').attr('src', backData.data.userPic);
+                                    // 刷新子页面
+                                    window.location.reload();
+                                }
+                            })
+                        }
+                    }
+                })
+            })
+            // 拓展:当不修改内容时,修改按钮不能触发
         })
 
 

@@ -9,7 +9,7 @@
         user_login: baseURL + '/admin/user/login',              //用户登录
         user_info: baseURL + '/admin/user/info',                //获取用户信息
         user_detail: baseURL + '/admin/user/detail',            //获取用户详情
-        use_edit: baseURL + '/admin/user/edit',                 //编辑用户信息
+        user_edit: baseURL + '/admin/user/edit',                 //编辑用户信息
         category_list: baseURL + '/admin/category/list',        //所有文章类别
         category_add: baseURL + '/admin/category/add',          //新增文章类别
         category_search: baseURL + '/admin/category/search',    //根据id查询指定文章类别
