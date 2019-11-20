@@ -68,6 +68,34 @@
             </form>
         </div>
     </div>
+    引入接口路径
+    <script src="./libs/http.js"></script>
+    <script>
+        // 向服务器请求获取用户数据并渲染
+        $.get({
+            url: BigNews.user_detail,
+            success: function (backData) {
+                if (backData.code === 200) {
+                    // $('input.username').val(backData.data.username);
+                    // $('input.nickname').val(backData.data.nickname);
+                    // $('input.email').val(backData.data.email);
+                    // $('input.password').val(backData.data.password);
+                    // $('.user_pic').attr('src', backData.data.userPic);
+                    // 简化
+                    $(backData.data).each(function (index) {
+                        console.log($(this));
+                        $('input.' + this).val(this);
+                    })
+                }
+            }
+        })
+
+
+
+
+
+
+    </script>
 </body>
 
 </html>
