@@ -72,7 +72,7 @@
     <script src="./libs/http.js"></script>
     <script>
         $(function () {
-            // 向服务器请求获取用户数据并渲染
+            // 向服务器请求获取用户数据,在页面上显示出用户的信息
             $.get({
                 url: BigNews.user_detail,
                 success: function (backData) {
@@ -83,6 +83,7 @@
                         // $('input.password').val(backData.data.password);
                         // $('.user_pic').attr('src', backData.data.userPic);
                         // 简化
+                        // 对象的遍历需要用 for in语法,each只能遍历数组
                         for (let key in backData.data) {
                             $('input.' + key).val(backData.data[key]);
                         }
