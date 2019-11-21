@@ -78,8 +78,8 @@
             <td class="text-center">{{$value.date}}</td>
             <td class="text-center">{{$value.state}}</td>
             <td class="text-center">
-                <a href="article_edit.html" data-id='{{$value.Id}}' class="btn btn-default btn-xs">编辑</a>
-                <a href="javascript:void(0);" data-id='{{$value.Id}}' class="btn btn-danger btn-xs delete">删除</a>
+                <a href="article_edit.html?id={{$value.id}}" class="btn btn-default btn-xs">编辑</a>
+                <a href="javascript:void(0);" data-id='{{$value.id}}' class="btn btn-danger btn-xs delete">删除</a>
             </td>
         </tr>
         {{/each}}
@@ -129,7 +129,7 @@
             //将可视页面和每页显示条数数定成变量,方便统一修改
             let visiblePages = 5;  //可视页面总数
             let perpage = 10;      //每页显示的文章数
-            let myPage;            //点击的页码数
+            let myPage = 1;            //需要作为参数的页码数,返回的就是第几页的数据
 
             // 封装获取当前页面数据
             const getData = function (obj) {
@@ -157,8 +157,9 @@
                 })
             }
             /*-----------------------------------华丽的分割线----------------------------------*/
-            debugger;
+            // 当登录的时候立刻向服务器发请求, 调取数据渲染到页面上
             getData({
+                page: myPage,
                 perpage: perpage,
                 success: function (backData) {
                     if (backData.code == 200) {
@@ -173,11 +174,14 @@
                             totalPages: backData.data.totalPage,
                             visiblePages: visiblePages,
                             onPageClick: function (event, page) {
-                                // if (page === 1) {
+                                // if (page == 1) {
                                 //     return;
                                 // }
+                                // 目的是为了让点击的页码数显示出来的数据的页码数匹配
                                 myPage = page;
                                 getData({
+                                    type: $('#selCategory').val(),
+                                    state: $('#selStatus').val(),
                                     page: myPage,
                                     perpage: perpage
                                 });
@@ -202,14 +206,52 @@
                 let categoryId = $('#selCategory').val();
                 let stateStr = $('#selStatus').val();
                 // 向服务器发送请求,获取符何要求的数据并渲染到页面
+                // debugger;
                 getData({
                     type: categoryId,
                     state: stateStr,
-                    perpage: perpage
+                    perpage: perpage,
+                    success: function (backData) {
+                        if (backData.code == 200 && backData.data.data.length !== 0) {
+                            let htmlStr = template('articleList', backData);
+                            $('tbody').html(htmlStr);
+                            $('#pagination').show();
+                            $('#pagination').twbsPagination('changeTotalPages', backData.data.totalPage, 1)
+                        } else {
+                            $('tbody').html('<tr><td style="text-align: center;color:#666;font-size: 25px" colspan=6>你都开始偷懒不工作了呀！</td></tr>');
+                            $('#pagination').hide();
+                        }
+                    }
                 })
             })
             // 点击删除按钮,删除该条数据,并更新页面
-
+            $('tbody').on('click', '.delete', function () {
+                let deleteId = $(this).attr('data-id');
+                console.log(myPage, deleteId);
+                if (confirm('你确定要删除吗?')) {
+                    $.post({
+                        url: BigNews.article_delete,
+                        data: {
+                            id: deleteId
+                        },
+                        success: function (backData) {
+                            if (backData.code == 204) {
+                                getData({
+                                    type: $('#selCategory').val(),
+                                    state: $('#selStatus').val(),
+                                    page: myPage,
+                                    perpage: perpage,
+                                    success: function (backData) {
+                                        let htmlStr = template('articleList', backData);
+                                        $('tbody').html(htmlStr);
+                                        $('#pagination').twbsPagination('changeTotalPages', backData.data.totalPage, 1);
+                                    }
+                                })
+                            }
+                        }
+                    })
+                }
+            })
 
 
 
