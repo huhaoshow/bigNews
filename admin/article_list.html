@@ -126,11 +126,40 @@
             // })
 
             // 向服务器发请求数据,将内容显示到页面上
-            $.get({
-                url: BigNews.article_query,
-                data: {
-                    perpage: 10
-                },
+            //将可视页面和每页显示条数数定成变量,方便统一修改
+            let visiblePages = 5;  //可视页面总数
+            let perpage = 10;      //每页显示的文章数
+            let myPage;            //点击的页码数
+
+            // 封装获取当前页面数据
+            const getData = function (obj) {
+                key = obj.key || '';
+                type = obj.type || '';
+                state = obj.state || '';
+                page = obj.page || '';
+                perpage = obj.perpage || '';
+                success = obj.success || function (backData) {
+                    if (backData.code == 200) {
+                        let htmlStr = template('articleList', backData);
+                        $('tbody').html(htmlStr);
+                    }
+                };
+                $.get({
+                    url: BigNews.article_query,
+                    data: {
+                        key: key,
+                        type: type,
+                        state: state,
+                        page: page,
+                        perpage: perpage
+                    },
+                    success: success
+                })
+            }
+            /*-----------------------------------华丽的分割线----------------------------------*/
+            debugger;
+            getData({
+                perpage: perpage,
                 success: function (backData) {
                     if (backData.code == 200) {
                         let htmlStr = template('articleList', backData);
@@ -141,17 +170,22 @@
                             prev: '上一页',
                             next: '下一页',
                             last: '尾页',
-                            totalPages: 35,
-                            visiblePages: 7,
+                            totalPages: backData.data.totalPage,
+                            visiblePages: visiblePages,
                             onPageClick: function (event, page) {
-                                    
+                                // if (page === 1) {
+                                //     return;
+                                // }
+                                myPage = page;
+                                getData({
+                                    page: myPage,
+                                    perpage: perpage
+                                });
                             }
                         })
                     }
                 }
             })
-
-
             // 向服务器发请求,获取类名并渲染到下拉选项中
             $.get({
                 url: BigNews.category_list,
@@ -168,34 +202,15 @@
                 let categoryId = $('#selCategory').val();
                 let stateStr = $('#selStatus').val();
                 // 向服务器发送请求,获取符何要求的数据并渲染到页面
-                $.get({
-                    url: BigNews.article_query,
-                    data: {
-                        type: categoryId,
-                        state: stateStr,
-                        perpage: 10
-                    },
-                    success: function (backData) {
-                        if (backData.code == 200) {
-                            let htmlStr = template('articleList', backData);
-                            $('tbody').html(htmlStr);
-                        }
-                    }
+                getData({
+                    type: categoryId,
+                    state: stateStr,
+                    perpage: perpage
                 })
             })
+            // 点击删除按钮,删除该条数据,并更新页面
 
-            // 添加分页插件
-            // $('#pagination').twbsPagination({
-            //     first: '首页',
-            //     prev: '上一页',
-            //     next: '下一页',
-            //     last: '尾页',
-            //     totalPages: 35,
-            //     visiblePages: 7,
-            //     onPageClick: function (event, page) {
-            //         console.log(page);
-            //     }
-            // })
+
 
 
 
