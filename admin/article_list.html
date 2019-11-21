@@ -25,11 +25,11 @@
                 <div class="col-xs-6">
                     <form class="form-inline">
                         <select id="selCategory" name="" class="form-control input-sm">
-                            <option value="">所有分类</option>
+                            <!-- <option value="">所有分类</option>
                             <option>未分类</option>
                             <option>奇趣事</option>
                             <option>会生活</option>
-                            <option>爱旅行</option>
+                            <option>爱旅行</option> -->
                         </select>
                         <select id="selStatus" name="" class="form-control input-sm">
                             <option value="">所有状态</option>
@@ -77,9 +77,12 @@
             </td>
         </tr>
         {{/each}}
-    
-    
-    
+    </script>
+    <script type="text/html" id="selectList">
+        <option value="">所有分类</option>
+        {{each data}}
+        <option value="{{$value.id}}">{{$value.name}}</option>
+        {{/each}}
     </script>
     <script>
         $(function () {
@@ -93,6 +96,21 @@
                     let htmlStr = template('articleList', backData);
                     $('tbody').html(htmlStr);
                 }
+            })
+            // 向服务器发请求,获取类名并渲染到下拉选项中
+            $.get({
+                url: BigNews.category_list,
+                success: function (backData) {
+                    let htmlStr = template('selectList', backData);
+                    $('#selCategory').html(htmlStr);
+                }
+            })
+            // 点击筛选,对所选内容进行筛选
+            $('#btnSearch').on('click', function (e) {
+                e.preventDefault();
+                let categoryId = $('#selCategory').val();
+                let stateStr = $('#selStatus').val();
+
             })
 
 
