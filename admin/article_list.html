@@ -92,59 +92,39 @@
     </script>
     <script>
         $(function () {
-            // 向服务器发请求数据,将内容显示到页面上
             //将可视页面和每页显示条数数定成变量,方便统一修改
             let visiblePages = 5;  //可视页面总数
             let perpage = 10;      //每页显示的文章数
             let nowPage = 1;        //需要作为参数的页码数,返回的就是第几页的数据
 
-            // 封装获取当前页面数据
-            const getData = function (obj) {
-                key = obj.key || '';
-                type = obj.type || '';
-                state = obj.state || '';
-                page = obj.page || '';
-                perpage = obj.perpage || '';
-                success = obj.success || function (backData) {
-                    if (backData.code == 200) {
-                        let htmlStr = template('articleList', backData);
-                        $('tbody').html(htmlStr);
-                    }
-                };
-                $.get({
-                    url: BigNews.article_query,
-                    data: {
-                        key: key,
-                        type: type,
-                        state: state,
-                        page: page,
-                        perpage: perpage
-                    },
-                    success: success
-                })
-            }
-            // 调用分页栏
+            // 调用分页栏,对于分页栏的使用,该分页栏插件不能被覆盖,所以更新总页码数需要调用changeTotalPages方法,详细参数可以参考插件官网介绍和源码
             $('#pagination').twbsPagination({
                 first: '首页',
                 prev: '上一页',
                 next: '下一页',
                 last: '尾页',
-                // 初始化设置的总页码数,不能被覆盖,需要修改的话需要使用changeTotalPages方法
                 visiblePages: visiblePages,
                 initiateStartPageClick: false,
                 onPageClick: function (event, page) {
-                    // 目的是为了让点击的页码数显示出来的数据的页码数匹配
-                    // 为了让分页栏点击时,页面显示的数据与点击的页码数的数据匹配,点击分页栏的时候,可以返回点击的该页码数,存放在page中,将其赋值给myPage让其作为参数发送请求,返回的数据则是请求页面的数据
+                    // 为了让分页栏点击时,页面显示的数据与点击的页码数的数据匹配,点击分页栏的页码时,可以返回点击的该页码数,存放在page中,将其赋值给nowPage让其作为参数发送请求,返回的数据则是请求页面的数据
                     nowPage = page;
-                    getData({
-                        type: $('#selCategory').val(),
-                        state: $('#selStatus').val(),
-                        page: nowPage,
-                        perpage: perpage
-                    });
+                    // 每次点击分页栏的时候就发送请求,获取到当前页面的数据并渲染到页面上
+                    $.get({
+                        url: BigNews.article_query,
+                        data: {
+                            type: $('#selCategory').val(),
+                            state: $('#selStatus').val(),
+                            page: nowPage,
+                            perpage: perpage
+                        },
+                        success: function (backData) {
+                            let htmlStr = template('articleList', backData);
+                            $('tbody').html(htmlStr);
+                        }
+                    })
                 }
             })
-            // 更新分页栏总页数封装
+            // 更新分页栏总页数的封装
             const totalPages = function (totalPages, currentPage) {
                 $('#pagination').twbsPagination('changeTotalPages', totalPages, currentPage);
             }
@@ -172,55 +152,23 @@
                     if (backData.code == 200) {
                         let htmlStr = template('articleList', backData);
                         $('tbody').html(htmlStr);
-                        // 更新分页栏的总页数,由于分页栏并不能被覆盖,所以需要用changeTotalPages方法来更改页面总数
-                        totalPages(backData.data.totalPage, 1);
-                    }
-                }
-
-            })
-
-
-            getData({
-                page: 1,
-                perpage: perpage,
-                success: function (backData) {
-                    if (backData.code == 200) {
-                        let htmlStr = template('articleList', backData);
-                        $('tbody').html(htmlStr);
-                        // 更新分页栏的总页数,由于分页栏并不能被覆盖,所以需要用changeTotalPages方法来更改页面总数
+                        // 数据渲染完后更新分页栏的总页数,由于分页栏并不能被覆盖,所以需要用changeTotalPages方法来更改页面总数
                         totalPages(backData.data.totalPage, 1);
                     }
                 }
             })
-            // 当下拉框内容发生变化时候,更新页面的数据
-            $('#selCategory').on('change', function () {
-                console.log($(this).val(), $('#selStatus').val());
-                getData({
-                    type: $('#selCategory').val(),
-                    state: $('#selStatus').val(),
-                    page: 1,
-                    perpage: perpage,
-                    success: function (backData) {
-                        if (backData.code == 200 && backData.data.data.length !== 0) {
-                            console.log(backData);
-                            let htmlStr = template('articleList', backData);
-                            $('tbody').html(htmlStr);
-                            $('#pagination').show();
-                            totalPages(backData.data.totalPage, 1);
-                        } else {
-                            $('tbody').html('<tr><td style="text-align: center;color:#666;font-size: 25px" colspan=6>你都开始偷懒不工作了呀！</td></tr>');
-                            $('#pagination').hide();
-                        }
-                    }
-                })
-            })
-            $('#selStatus').on('change', function () {
-                console.log($(this).val(), $('#selCategory').val());
-                getData({
-                    type: $('#selCategory').val(),
-                    state: $('#selStatus').val(),
-                    page: 1,
-                    perpage: perpage,
+            // 为了解决当没有点筛选的情况下,设置了筛选条件后,在点击分页栏的时候会得到筛选后的数据,
+            // 当下拉框内容发生变化时候触发事件,更新页面的数据并修改分页栏总页码数
+            // 将下拉选项框时触发的事件抽离封装
+            const select = function () {
+                $.get({
+                    url: BigNews.article_query,
+                    data: {
+                        type: $('#selCategory').val(),
+                        state: $('#selStatus').val(),
+                        page: 1,
+                        perpage: perpage
+                    },
                     success: function (backData) {
                         if (backData.code == 200 && backData.data.data.length !== 0) {
                             let htmlStr = template('articleList', backData);
@@ -233,8 +181,11 @@
                         }
                     }
                 })
-            })
-
+            }
+            // 文章类型下拉框的条件改变时候触发更新页面的事件
+            $('#selCategory').on('change', select);
+            // 文章状态的下拉框的条件
+            $('#selStatus').on('change', select);
             // 点击筛选,对所选内容进行筛选
             // $('#btnSearch').on('click', function (e) {
             //     e.preventDefault();
@@ -276,11 +227,14 @@
                         },
                         success: function (backData) {
                             if (backData.code == 204) {
-                                getData({
-                                    type: $('#selCategory').val(),
-                                    state: $('#selStatus').val(),
-                                    page: nowPage,
-                                    perpage: perpage,
+                                $.get({
+                                    url: BigNews.article_query,
+                                    data: {
+                                        type: $('#selCategory').val(),
+                                        state: $('#selStatus').val(),
+                                        page: nowPage,
+                                        perpage: perpage
+                                    },
                                     success: function (backData) {
                                         let htmlStr = template('articleList', backData);
                                         $('tbody').html(htmlStr);
