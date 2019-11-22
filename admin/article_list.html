@@ -62,7 +62,7 @@
 
                 </tbody>
             </table>
-            <!-- 未分类的分页栏 -->
+            <!-- 分页栏 -->
             <div class="row text-center">
                 <ul id="pagination" class="pagination-sm"></ul>
             </div>
@@ -92,44 +92,11 @@
     </script>
     <script>
         $(function () {
-            // 我这神奇的代码啊!为什么执行不了啊!!!!
-            // $('#pagination').twbsPagination({
-            //     first: '首页',
-            //     prev: '上一页',
-            //     next: '下一页',
-            //     last: '尾页',
-            //     totalPages: 5,
-            //     visiblePages: 7,
-            //     onPageClick: function (event, page) {
-            //         $.get({
-            //             url: BigNews.article_query,
-            //             data: {
-            //                 perpage: 10
-            //             },
-            //             success: function (backData) {
-            //                 if (backData.code == 200) {
-            //                     console.log(backData);
-            //                     let htmlStr = template('articleList', backData);
-            //                     $('tbody').html(htmlStr);
-            //                     $('#pagination').twbsPagination({
-            //                         first: '首页',
-            //                         prev: '上一页',
-            //                         next: '下一页',
-            //                         last: '尾页',
-            //                         totalPages: backData.data.totalPage,
-            //                         visiblePages: 7
-            //                     })
-            //                 }
-            //             }
-            //         })
-            //     }
-            // })
-
             // 向服务器发请求数据,将内容显示到页面上
             //将可视页面和每页显示条数数定成变量,方便统一修改
             let visiblePages = 5;  //可视页面总数
             let perpage = 10;      //每页显示的文章数
-            let myPage = 1;        //需要作为参数的页码数,返回的就是第几页的数据
+            let nowPage = 1;        //需要作为参数的页码数,返回的就是第几页的数据
 
             // 封装获取当前页面数据
             const getData = function (obj) {
@@ -156,8 +123,35 @@
                     success: success
                 })
             }
+            // 调用分页栏
+            $('#pagination').twbsPagination({
+                first: '首页',
+                prev: '上一页',
+                next: '下一页',
+                last: '尾页',
+                // 初始化设置的总页码数,不能被覆盖,需要修改的话需要使用changeTotalPages方法
+                visiblePages: visiblePages,
+                initiateStartPageClick: false,
+                onPageClick: function (event, page) {
+                    // 目的是为了让点击的页码数显示出来的数据的页码数匹配
+                    // 为了让分页栏点击时,页面显示的数据与点击的页码数的数据匹配,点击分页栏的时候,可以返回点击的该页码数,存放在page中,将其赋值给myPage让其作为参数发送请求,返回的数据则是请求页面的数据
+                    nowPage = page;
+                    getData({
+                        type: $('#selCategory').val(),
+                        state: $('#selStatus').val(),
+                        page: nowPage,
+                        perpage: perpage
+                    });
+                }
+            })
+            // 更新分页栏总页数封装
+            const totalPages = function (totalPages, currentPage) {
+                $('#pagination').twbsPagination('changeTotalPages', totalPages, currentPage);
+            }
+
             /*-----------------------------------华丽的分割线----------------------------------*/
-            // 页面显示后立刻向服务器发请求,获取类名并渲染到下拉选项中
+
+            // 页面显示后立刻向服务器发请求,获取数据并渲染到下拉选项中
             $.get({
                 url: BigNews.category_list,
                 success: function (backData) {
@@ -167,59 +161,52 @@
                     }
                 }
             })
-            // 当登录的时候立刻向服务器发请求, 调取数据渲染到页面上
+            // 页面显示后时候立刻向服务器发请求, 调取数据渲染到页面上
+            $.get({
+                url: BigNews.article_query,
+                data: {
+                    page: 1,
+                    perpage: perpage
+                },
+                success: function (backData) {
+                    if (backData.code == 200) {
+                        let htmlStr = template('articleList', backData);
+                        $('tbody').html(htmlStr);
+                        // 更新分页栏的总页数,由于分页栏并不能被覆盖,所以需要用changeTotalPages方法来更改页面总数
+                        totalPages(backData.data.totalPage, 1);
+                    }
+                }
+
+            })
+
+
             getData({
-                page: myPage,
+                page: 1,
                 perpage: perpage,
                 success: function (backData) {
                     if (backData.code == 200) {
-                        console.log(backData);
                         let htmlStr = template('articleList', backData);
                         $('tbody').html(htmlStr);
-                        // 使用分页栏插件,添加分页栏,参数详情参考插件介绍
-                        $('#pagination').twbsPagination({
-                            first: '首页',
-                            prev: '上一页',
-                            next: '下一页',
-                            last: '尾页',
-                            // 初始化设置的总页码数,不能被覆盖,需要修改的话需要使用changeTotalPages方法
-                            totalPages: backData.data.totalPage,
-                            visiblePages: visiblePages,
-                            initiateStartPageClick: false,
-                            onPageClick: function (event, page) {
-                                // 目的是为了让点击的页码数显示出来的数据的页码数匹配
-                                // 为了让分页栏点击时,页面显示的数据与点击的页码数的数据匹配,点击分页栏的时候,可以返回点击的该页码数,存放在page中,将其赋值给myPage让其作为参数发送请求,返回的数据则是请求页面的数据
-                                myPage = page;
-                                getData({
-                                    type: $('#selCategory').val(),
-                                    state: $('#selStatus').val(),
-                                    page: myPage,
-                                    perpage: perpage
-                                });
-                            }
-                        })
+                        // 更新分页栏的总页数,由于分页栏并不能被覆盖,所以需要用changeTotalPages方法来更改页面总数
+                        totalPages(backData.data.totalPage, 1);
                     }
                 }
             })
-            // 点击筛选,对所选内容进行筛选
-            $('#btnSearch').on('click', function (e) {
-                e.preventDefault();
-                // 对于下拉选项框,select标签的value值是所选定的option的value值,如果没有则是该option的文本内容
-                let categoryId = $('#selCategory').val();
-                let stateStr = $('#selStatus').val();
-                // 向服务器发送请求,获取符何要求的数据并渲染到页面
+            // 当下拉框内容发生变化时候,更新页面的数据
+            $('#selCategory').on('change', function () {
+                console.log($(this).val(), $('#selStatus').val());
                 getData({
-                    type: categoryId,
-                    state: stateStr,
+                    type: $('#selCategory').val(),
+                    state: $('#selStatus').val(),
+                    page: 1,
                     perpage: perpage,
                     success: function (backData) {
-                        // 要判断筛选的结果是否为空
                         if (backData.code == 200 && backData.data.data.length !== 0) {
+                            console.log(backData);
                             let htmlStr = template('articleList', backData);
                             $('tbody').html(htmlStr);
                             $('#pagination').show();
-                            // 每次点击筛选后,在原先的分页栏的基础上把分页栏的总页面更新为筛选条件的总页面数,并将起始页更改为1;
-                            $('#pagination').twbsPagination('changeTotalPages', backData.data.totalPage, 1);
+                            totalPages(backData.data.totalPage, 1);
                         } else {
                             $('tbody').html('<tr><td style="text-align: center;color:#666;font-size: 25px" colspan=6>你都开始偷懒不工作了呀！</td></tr>');
                             $('#pagination').hide();
@@ -227,6 +214,54 @@
                     }
                 })
             })
+            $('#selStatus').on('change', function () {
+                console.log($(this).val(), $('#selCategory').val());
+                getData({
+                    type: $('#selCategory').val(),
+                    state: $('#selStatus').val(),
+                    page: 1,
+                    perpage: perpage,
+                    success: function (backData) {
+                        if (backData.code == 200 && backData.data.data.length !== 0) {
+                            let htmlStr = template('articleList', backData);
+                            $('tbody').html(htmlStr);
+                            $('#pagination').show();
+                            totalPages(backData.data.totalPage, 1);
+                        } else {
+                            $('tbody').html('<tr><td style="text-align: center;color:#666;font-size: 25px" colspan=6>你都开始偷懒不工作了呀！</td></tr>');
+                            $('#pagination').hide();
+                        }
+                    }
+                })
+            })
+
+            // 点击筛选,对所选内容进行筛选
+            // $('#btnSearch').on('click', function (e) {
+            //     e.preventDefault();
+            //     // 对于下拉选项框,select标签的value值是所选定的option的value值,如果没有则是该option的文本内容
+            //     let categoryId = $('#selCategory').val();
+            //     let stateStr = $('#selStatus').val();
+            //     // 向服务器发送请求,获取符何要求的数据并渲染到页面
+            //     getData({
+            //         type: categoryId,
+            //         state: stateStr,
+            //         perpage: perpage,
+            //         success: function (backData) {
+            //             // 要判断筛选的结果是否为空
+            //             if (backData.code == 200 && backData.data.data.length !== 0) {
+            //                 let htmlStr = template('articleList', backData);
+            //                 $('tbody').html(htmlStr);
+            //                 $('#pagination').show();
+            //                 // 每次点击筛选后,在原先的分页栏的基础上把分页栏的总页面更新为筛选条件的总页面数,并将起始页更改为1;
+            //                 // 为什么要这么调用,目前还不知道
+            //                 $('#pagination').twbsPagination('changeTotalPages', backData.data.totalPage, 1);
+            //             } else {
+            //                 $('tbody').html('<tr><td style="text-align: center;color:#666;font-size: 25px" colspan=6>你都开始偷懒不工作了呀！</td></tr>');
+            //                 $('#pagination').hide();
+            //             }
+            //         }
+            //     })
+            // })
 
             // 点击删除按钮,删除该条数据,并更新页面
             // 由于删除按钮时新生成的,所以需要事件委派
@@ -244,14 +279,14 @@
                                 getData({
                                     type: $('#selCategory').val(),
                                     state: $('#selStatus').val(),
-                                    page: myPage,
+                                    page: nowPage,
                                     perpage: perpage,
                                     success: function (backData) {
                                         let htmlStr = template('articleList', backData);
                                         $('tbody').html(htmlStr);
                                         // 要实现当删除的文章是当前页面最后一条数据的时候,将页面跳转回前一页,由于返回的数据中的文章内容是被删除文章所在页面更新后的文章数据,所以当文章的数量为0时,则说明删除的则是最后一篇文章,再进行页码自减就能完成
-                                        if (backData.data.data.length === 0) myPage--;
-                                        $('#pagination').twbsPagination('changeTotalPages', backData.data.totalPage, myPage);
+                                        if (backData.data.data.length === 0) nowPage--;
+                                        totalPages(backData.data.totalPage, nowPage);
                                     }
                                 })
                             }
